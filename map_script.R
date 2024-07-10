@@ -1,20 +1,49 @@
 #### geospatial ###
 ##### IMPORT DONNEES ####
-library(data.table)
 library(leaflet)
 library(ggmap)
 library(devtools)
 library(sf)
+library(htmlwidgets)
 
 # IMPORT
-dial<-fread("dialyses.csv")
-acc<-fread("accnt_oct_2019.csv")
-sites<-fread("site_geoloc_finess.csv")
-geocod<-fread("finess_idf_adress.geocoded.csv")
-str(acc)
+dial<-read.csv2("dialyses.csv",numerals = c("lat","lon"))
 str(dial)
-acc$finess<-as.character(acc$finess)
-geocod$finess<-as.character(geocod$finess)
+acc<-read.csv2("accnt_oct_2019.csv",colClasses = c(finess="character",site="character",sejours="integer"))
+str(acc)
+sites<-read.csv("site_geoloc_finess.csv",colClasses = c(finess="character",site="character",lon="numeric",lat="numeric"))
+str(sites) 
+geocod<-fread("finess_idf_adress.geocoded.csv")
+
+# sites de dialyse IDF avec marqueurs ####
+m <- leaflet(dial) %>% addTiles() %>% 
+  setView(lng =2.3, lat = 48.9, zoom = 12) %>% 
+  addMarkers(lng = ~lon, lat = ~lat,label=~site)
+m
+# sauvergarde carte html
+saveWidget(m, file="sites_dialyse_idf.html", selfcontained = TRUE)
+#
+# Centres de dialyse (public/privé) avec volume annuel d'activité en IDF ####
+#
+pub<-subset(dial,type=="prv")
+prv<-subset(dial,type=="aphp")
+#
+n <- leaflet(dial) %>% addTiles() %>% 
+  setView(lng =2.3, lat = 48.9, zoom = 12) %>%
+  addCircles(lng = ~pub$lon, lat = ~pub$lat, weight = 1,
+             radius = ~sqrt(pub$dial19)*5, popup = ~paste(pub$site, ":", pub$dial19,"seances"),
+             color = "#0063AF", fillOpacity = 0.8)%>%
+  addCircles(lng = ~prv$lon, lat = ~prv$lat, weight = 1,
+             radius = ~sqrt(prv$dial19)*5, popup = ~paste(prv$site, ":", prv$dial19,"seances"),
+             color = "#E5006D", fillOpacity = 0.8)%>%
+  addLegend(
+    position = "bottomleft",
+    colors = c("#0063AF","#E5006D"),
+    labels = c("privé","aphp"), opacity = 1,
+    title = "Type centre")
+n
+saveWidget(n, file="activite_dialyse_pub_prv_idf.html", selfcontained = TRUE)
+#
 acnt<-merge(acc,geocod,by = "finess",all.x = T)
 write.csv2(acnt,file = "acnt.csv")
 acnt<-fread("acnt.csv")# reimport apres ajout de finess manquant
@@ -40,11 +69,8 @@ pub<-subset(dial,type=="prv")
 prv<-subset(dial,type=="aphp")
 #
 #
-#hopitaux avec marqueurs####
-m <- leaflet(dial) %>% addTiles() %>% 
-  setView(lng =2.3, lat = 48.9, zoom = 12) %>% 
-  addMarkers(lng = ~lon, lat = ~lat)
-m
+
+
 # hopitaux - sejours, public vs prive couleurs differentes ####
 #
 # arrondissements de Paris avec limites
@@ -52,7 +78,6 @@ arp<-st_read(dsn = "arrondissements.shp", stringsAsFactors = F)
 #
 n <- leaflet(dial) %>% addTiles() %>% 
   setView(lng =2.3, lat = 48.9, zoom = 11) %>%
-  addProviderTiles("Stamen.Toner", group = "Toner by Stamen")%>%
   addCircles(lng = ~pub$lon, lat = ~pub$lat, weight = 1,
              radius = ~sqrt(pub$dial19)*5, popup = ~paste(pub$site, ":", pub$dial19,"seances"),
              color = "#920000", fillOpacity = 0.8)%>%
@@ -125,12 +150,13 @@ pal <- colorQuantile("YlOrRd", quakes$mag)
 #
 ###### PUBLICATION DE CARTE #####
 library(shiny)
+
 app <- shinyApp(
   ui = fluidPage(leafletOutput('n'),height=1000),
   server = function(input, output) {
-    map = leaflet(hpt)%>%  addProviderTiles("Stamen.Toner", group = "Toner by Stamen")%>% 
+    map = leaflet(dial)%>%
       addCircles(lng = ~lon, lat = ~lat, weight = 1,
-                 radius = ~sqrt(vol1718) * 9, popup = ~paste(nomcourt, ":", vol1718),
+                 radius = ~sqrt(dial19) * 9, popup = ~paste(site, ":", dial19),
                  color = "#920000", fillOpacity = 0.8)
     output$n = renderLeaflet(map)
   }
