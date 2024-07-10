@@ -1,8 +1,6 @@
 #### geospatial ###
 ##### IMPORT DONNEES ####
 library(leaflet)
-library(ggmap)
-library(devtools)
 library(sf)
 library(htmlwidgets)
 
@@ -44,16 +42,7 @@ n <- leaflet(dial) %>% addTiles() %>%
 n
 saveWidget(n, file="activite_dialyse_pub_prv_idf.html", selfcontained = TRUE)
 #
-acnt<-merge(acc,geocod,by = "finess",all.x = T)
-write.csv2(acnt,file = "acnt.csv")
-acnt<-fread("acnt.csv")# reimport apres ajout de finess manquant
-acnt$sejours<-as.numeric(acnt$sejours)
-dial$dial18<-as.numeric(dial$dial18)
-dial$dial19<-as.numeric(dial$dial19)
-str(acnt)
-#
-#
-save(acnt,file = "acnt.rda")
+
 #
 ##### ajouter legende aux marqueurs, a la ligne ###
 acnt$hover <- with(acnt, paste(site, '<br>', sejours, "accnt 2019oct"))
@@ -68,9 +57,6 @@ ac1<-subset(acnt,htype=="public")
 pub<-subset(dial,type=="prv")
 prv<-subset(dial,type=="aphp")
 #
-#
-
-
 # hopitaux - sejours, public vs prive couleurs differentes ####
 #
 # arrondissements de Paris avec limites
@@ -91,7 +77,6 @@ n <- leaflet(dial) %>% addTiles() %>%
                title = "Type centre")
 
 n
-?addPolygons
 #
 pal<-colorFactor(c("navy","red","brown"),domain = c("ap","pb","pr"))
 leaflet(hpt) %>% addTiles() %>%
