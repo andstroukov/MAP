@@ -1,0 +1,47 @@
+---
+title: "Origines géographiques des patients hospitalisés en orthopédie en 2019"
+author: "DIM"
+date: "2024-07-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaflet)
+library(dplyr)
+library(kableExtra)
+
+```
+```{r setup2,echo=FALSE, out.width='40%', fig.align='left', fig.cap='DIM-Unité MSI'}
+knitr::include_graphics('~/R/Ortho/logo3.jpg')
+```
+
+## Séjours en orthopédie en 2019 selon hôpital et origine géographique (domicile)
+
+En 2019, en orthopédie (HC et HDJ) de Bichat et de Beajon, la distribution selon origine géographique:
+
+```{r tab2,echo=FALSE}
+load("~/R/Ortho/tbl.rda")
+kable(tbl)%>%
+  kable_styling("striped", full_width = F,position = "left") %>%
+  column_spec(1, bold = T) %>%
+  row_spec(2, bold = T, color = "white", background = "#5BC5F2")%>%
+  footnote(general = "Données issues de DIM report. "
+           )
+```
+
+## Carte des origines des patients hospitalisés en orthopédie à Bichat en 2019:
+
+```{r mapBCH, echo=FALSE}
+load(file="~/R/Ortho/mapBCH.rda")
+mapBCH
+
+```
+
+## Carte des origines des patients hospitalisés en orthopédie à Beaujon en 2019:
+
+```{r mapBJN, echo=FALSE}
+load(file="~/R/Ortho/mapBJN.rda")
+mapBJN
+
+```
