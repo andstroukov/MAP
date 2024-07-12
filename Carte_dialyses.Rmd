@@ -1,0 +1,41 @@
+---
+title: "Centres et volumes d'activité des centres de dialyse en région parisienne"
+author: "DIM"
+date: "10 août 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaflet)
+library(dplyr)
+
+```
+
+
+## Carte de centres de dialyses et des volumes d'activité en 2019 
+
+Public ou privé
+
+```{r map_dialyse, echo=FALSE}
+dial<-read.csv2("dialyses.csv") %>% 
+  mutate(lat=as.numeric(lat),lon=as.numeric(lon))
+pub<-subset(dial,type=='aphp')
+prv<-subset(dial,type=='prv')
+nmap <- leaflet(dial) %>% addTiles() %>% 
+  setView(lng =2.3, lat = 48.9, zoom = 11) %>%
+  addProviderTiles("Stadia.StamenToner")%>% # AlidadeSmooth
+  addCircles(lng = ~pub$lon, lat = ~pub$lat, weight = 1,
+             radius = ~sqrt(dial$dial19)*5, popup = ~paste(pub$site, ":", pub$dial19,"seances"),
+             color = "#00A2E0", fillOpacity = 0.8)%>%
+  addCircles(lng = ~prv$lon, lat = ~prv$lat, weight = 1,
+             radius = ~sqrt(prv$dial19)*5, popup = ~paste(prv$site, ":", prv$dial19,"seances"),
+             color = "#B0348B", fillOpacity = 0.8)%>%
+  addLegend(
+    position = "bottomleft",
+    colors = c("#00A2E0","#B0348B"),
+    labels = c("privé","aphp"), opacity = 1,
+    title = "Type centre")
+nmap
+
+```
